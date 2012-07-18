@@ -1,0 +1,9 @@
+require('ember/data');
+
+module.exports = DS.Model.extend({
+  poems: DS.hasMany('App.Poem'),
+
+  createdAt: DS.attr('date'),
+  username: DS.attr('string'),
+  password: DS.attr('string')
+});
