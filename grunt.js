@@ -14,7 +14,7 @@ module.exports = function(grunt) {
     pkg: '<json:package.json>',
 
     // Compile ember templates.
-    emberTemplates: {
+    ember_handlebars: {
       all: {
         src: ['client/templates/**/*.hbs'],
         dest: 'client/templates/compiled'
@@ -33,13 +33,13 @@ module.exports = function(grunt) {
     watch: {
       client: {
         files: files.concat(['client/templates/**/*.hbs']),
-        tasks: 'emberTemplates concat'
+        tasks: 'default'
       }
     }
 
     // TODO: Minify, separate dev and production configs.
   });
 
-  grunt.loadTasks('tasks');
-  grunt.registerTask('default', 'emberTemplates concat');
+  grunt.loadNpmTasks('grunt-ember-handlebars');
+  grunt.registerTask('default', 'ember_handlebars concat');
 };
