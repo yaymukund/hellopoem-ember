@@ -1,0 +1,7 @@
+{{#each lines}}
+<div class="line">{{text}}</div>
+{{/each}}
+
+{{#if canEdit}}
+{{view App.EditPoemField}}
+{{/if}}

@@ -1,2 +1,4 @@
 secret.json
 node_modules
+redis-local.conf
+client/templates/compiled/*.*

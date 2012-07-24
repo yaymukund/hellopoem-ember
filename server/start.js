@@ -20,15 +20,8 @@ app.configure(function() {
     store: new RedisStore({client: db}) // Use a single db connection.
   }));
 
-  // Use browserify to share client/server code.
-  var browserify = require('browserify');
-
-  var clientJs = browserify({
-    mount: '/client.js',
-    require: __dirname + '/client/application.js'
-  });
-
-  app.use(clientJs);
+  // Serve just the index.html.
+  app.use(express.static(__dirname + '/public'));
 });
 
 // Dev options.

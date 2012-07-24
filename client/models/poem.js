@@ -1,6 +1,4 @@
-require('ember/data');
-
-module.exports = DS.Model.extend({
+App.Poem = DS.Model.extend({
   user: DS.belongsTo('App.User'),
   stanzas: DS.hasMany('App.Stanza'),
 
@@ -10,4 +8,8 @@ module.exports = DS.Model.extend({
 
   createdAt: DS.attr('date'),
   title: DS.attr('string')
+});
+
+App.Poem.reopenClass({
+  url: '/poems/%@'
 });
