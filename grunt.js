@@ -41,5 +41,5 @@ module.exports = function(grunt) {
   });
 
   grunt.loadNpmTasks('grunt-ember-handlebars');
-  grunt.registerTask('default', 'ember_handlebars concat');
+  grunt.registerTask('default', ['ember_handlebars', 'concat']);
 };
