@@ -55,7 +55,7 @@ App.adapter = DS.Adapter.create({
   },
 
   updateRecord: function(store, type, record) {
-    var url = makeUrl(type, id);
+    var url = makeUrl(type, record.get('id'));
 
     jQuery.ajax({
       url: url,
@@ -70,7 +70,7 @@ App.adapter = DS.Adapter.create({
   },
 
   deleteRecord: function(store, type, record) {
-    var url = makeUrl(type, id);
+    var url = makeUrl(type, record.get('id'));
 
     jQuery.ajax({
       url: url,

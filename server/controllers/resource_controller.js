@@ -29,18 +29,21 @@ exports.create = function(options) {
       function createResource(err, id) {
         if (err) { throw err; }
 
+        props.id = id;
         var key = options.name + 's:' + id;
 
         db.hmset(key, props, this.parallel());
-        db.sadd('ids:' + options.name, this.parallel());
+        db.sadd('ids:' + options.name, id, this.parallel());
 
         return id;
       },
 
       function respond(err, id) {
-        if (err) { res.json('Error!', 500); }
+        if (err) {
+          res.json(500, {error: err.message});
+          return;
+        }
 
-        props.id = id;
         res.json(props);
       }
     );
@@ -55,16 +58,53 @@ exports.create = function(options) {
       },
 
       function respond(err, savedResource) {
+        if (err) {
+          res.json(500, {error: err.message});
+          return;
+        }
+
         res.json(savedResource);
       }
     );
   };
 
   resource.update = function(req, res) {
+    var key = options.name + 's:' + req.params.id;
+
+    Step(
+      function getResource() {
+        db.hmset(key, req.body[options.name], this);
+      },
+
+      function respond(err, savedResource) {
+        if (err) {
+          res.json(500, {error: err.message});
+          return;
+        }
+
+        res.json(req.body[options.name]);
+      }
+    );
   };
 
   resource.destroy = function(req, res) {
-    console.log(req.body);
+    var key = options.name + 's:' + req.params.id;
+
+    Step(
+      function destroyResource() {
+        db.del(key, this.parallel());
+        db.srem(ids + 's:' + options.name, req.params.id, this.parallel());
+      },
+
+      function respond(err) {
+        if (err) {
+          res.json(500, {error: err.message});
+          return;
+        }
+
+        res.send(200);
+      }
+    );
   };
 
   resource.initialize = function(app) {

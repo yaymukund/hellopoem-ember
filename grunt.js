@@ -14,7 +14,7 @@ module.exports = function(grunt) {
     'server/views/**/*.js'
   ];
 
-  var template_files = ['client/templates/**/*.js'];
+  var template_files = ['client/templates/**/*.hbs'];
   var compiled_templates = ['client/templates/compiled/**/*.js'];
   var test_files = ['server/test/**/*.js', 'client/test/**/*.js'];
 
@@ -44,7 +44,6 @@ module.exports = function(grunt) {
       all: {
         src: test_files,
         options: {
-          require: ['should'],
           ui: 'bdd',
           reporter: 'tap'
         }

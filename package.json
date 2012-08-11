@@ -26,7 +26,7 @@
 
   "devDependencies": {
     "mocha"     : "1.3.x",
-    "should"    : "0.6.x",
+    "should"    : "1.1.x",
     "zombie"    : "1.3.x",
     "jsdom"     : "0.2.x",
     "supertest" : "0.1.x"

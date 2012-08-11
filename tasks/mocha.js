@@ -24,7 +24,6 @@ module.exports = function(grunt) {
     var options = this.data.options || {};
 
     var mocha_instance = new Mocha(options);
-    var should = require('should');
 
     paths.map(mocha_instance.addFile.bind(mocha_instance));
     mocha_instance.run(this.async());
