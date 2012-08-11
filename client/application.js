@@ -1,3 +1,1 @@
-App = Em.Application.create({
-  baseUrl: '/api'
-});
+App = Em.Application.create();

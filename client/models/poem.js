@@ -9,7 +9,3 @@ App.Poem = DS.Model.extend({
   createdAt: DS.attr('date'),
   title: DS.attr('string')
 });
-
-App.Poem.reopenClass({
-  url: '/poems/%@'
-});

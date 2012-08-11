@@ -1,3 +1,5 @@
+App = Em.Application.create();
+
 // Utility functions.
 var modelName = function(type) {
   // use the last part of the name as the URL
@@ -89,3 +91,78 @@ App.store = DS.Store.create({
   revision: 4,
   adapter: App.adapter
 });
+
+App.Line = DS.Model.extend({
+  user: DS.belongsTo('App.User'),
+
+  createdAt: DS.attr('date'),
+  text: DS.attr('string')
+});
+
+App.Poem = DS.Model.extend({
+  user: DS.belongsTo('App.User'),
+  stanzas: DS.hasMany('App.Stanza'),
+
+  lines: function() {
+    return this.get('stanzas').getEach('line');
+  }.property('stanzas'),
+
+  createdAt: DS.attr('date'),
+  title: DS.attr('string')
+});
+
+App.Stanza = DS.Model.extend({
+  lines: DS.hasMany('App.Line'),
+  poems: DS.hasMany('App.Poem')
+});
+
+App.User = DS.Model.extend({
+  poems: DS.hasMany('App.Poem'),
+
+  createdAt: DS.attr('date'),
+  username: DS.attr('string'),
+  password: DS.attr('string')
+});
+
+App.ApplicationController = Em.Controller.extend();
+App.ApplicationView = Em.View.extend({
+  templateName: 'application'
+});
+
+App.HomeController = Em.Controller.extend({});
+App.HomeView = Em.View.extend({
+  templateName: 'home'
+});
+
+App.PoemController = Em.ObjectController.extend();
+
+App.PoemView = Em.View.extend({
+  templateName: 'poem',
+  classNames: ['poem']
+});
+
+App.EditPoemField = Em.TextField.extend();
+
+var router = Em.Router.create({
+  enableLogging: true,
+  location: 'hash',
+
+  root: Em.Route.extend({
+    home: Em.Route.extend({
+      route: '/',
+      connectOutlets: function(router, context) {
+        var poem = {
+          title: 'A poem.',
+          lines: [{text: 'Roses are red'},
+                  {text: 'Violets are blue'},
+                  {text: 'Yay!'}],
+          canEdit: true
+        };
+
+        router.get('applicationController').connectOutlet('poem', poem);
+      }
+    })
+  })
+});
+
+App.initialize(router);

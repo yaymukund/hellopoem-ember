@@ -10,7 +10,7 @@ var router = Em.Router.create({
           title: 'A poem.',
           lines: [{text: 'Roses are red'},
                   {text: 'Violets are blue'},
-                  {text: 'OH MY GOD I AM BLEEDING'}],
+                  {text: 'Yay!'}],
           canEdit: true
         };
 

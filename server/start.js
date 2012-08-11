@@ -1,7 +1,11 @@
 var express = require('express');
 var app = express();
 
-app.configure(function() {
+var start = function(environment) {
+  if (typeof(environment) !== 'undefined') {
+    app.set('env', environment);
+  }
+
   // Parse request bodies into a JSON object.
   app.use(express.bodyParser());
 
@@ -20,21 +24,25 @@ app.configure(function() {
     store: new RedisStore({client: db}) // Use a single db connection.
   }));
 
-  // Serve just the index.html.
+  // Serve compiled JS and index.html.
   app.use(express.static(__dirname + '/public'));
-});
 
-// Dev options.
-app.configure('development', function() {
-  app.use(express.logger());
-});
+  // Dev options.
+  if (app.get('env') === 'development') {
+    app.use(express.logger());
+  }
 
-// Start the server!
-var http = require('http');
-var coreServer = http.createServer(app);
+  // Set up routing.
+  require('./routes.js')(app);
+
+  return app;
+};
 
 if (module.parent) {
-  module.exports = coreServer;
+  module.exports = start;
 } else {
-  coreServer.listen(3000);
+  // Start the server!
+  var http = require('http');
+  var app = start();
+  http.createServer(app).listen(3000);
 }

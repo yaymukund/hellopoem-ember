@@ -4,7 +4,3 @@ App.Line = DS.Model.extend({
   createdAt: DS.attr('date'),
   text: DS.attr('string')
 });
-
-App.Line.reopenClass({
-  url: '/lines/%@'
-});
