@@ -39,6 +39,10 @@ App.adapter = DS.Adapter.create({
     });
   },
 
+  random: function(store, type) {
+    jQuery.ajax({});
+  },
+
   createRecord: function(store, type, record) {
     var url = makeUrl(type);
 

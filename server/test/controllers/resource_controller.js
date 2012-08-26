@@ -84,7 +84,8 @@ describe('GET /resources/:id', function() {
 
       function checkResponse(err, res) {
         should.not.exist(err);
-        res.body.should.eql(resource);
+        _.pick(res.body, _.keys(resource))
+          .should.eql(resource);
         done();
       }
     );
@@ -99,8 +100,6 @@ describe('PUT /resources/:id', function() {
 
   var modifiedResource = _.clone(resource);
   modifiedResource.text = 'not lolol';
-
-  var result;
 
   before(function(done) {
     Step(
@@ -117,14 +116,9 @@ describe('PUT /resources/:id', function() {
 
       function setResult(err, res) {
         should.not.exist(err);
-        result = res.body;
         done();
       }
     );
-  });
-
-  it('saves the resource without errors', function() {
-    result.should.eql(modifiedResource);
   });
 
   describe('the saved resource', function() {
@@ -144,8 +138,9 @@ describe('PUT /resources/:id', function() {
       );
     });
 
-    it('should contain the update', function() {
-      savedResource.should.eql(modifiedResource);
+    it('contains the update', function() {
+      _.pick(savedResource, _.keys(modifiedResource))
+        .should.eql(modifiedResource);
     });
   });
 });
@@ -177,7 +172,7 @@ describe('DELETE /resources/:id', function() {
     );
   });
 
-  it('should delete the key', function(done) {
+  it('deletes the key', function(done) {
     Step(
       function searchForKey() {
         db.exists('resources:3', this);
@@ -191,7 +186,7 @@ describe('DELETE /resources/:id', function() {
     );
   });
 
-  it('should remove the ID from the set of resource IDs', function(done) {
+  it('removes the ID from the set of resource IDs', function(done) {
     Step(
       function searchForId() {
         db.sismember(3, 'ids:resource', this);

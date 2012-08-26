@@ -22,5 +22,5 @@ watch :
 #	mocha = node_modules/mocha/bin/mocha
 #	tests = $$(find spec -name "*-spec.js")
 #	
-#	tests :
-#		$(mocha) -CR spec $(tests)
+test :
+	node_modules/grunt/bin/grunt mocha

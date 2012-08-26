@@ -41,6 +41,10 @@ App.adapter = DS.Adapter.create({
     });
   },
 
+  random: function(store, type) {
+    console.log(arguments);
+  },
+
   createRecord: function(store, type, record) {
     var url = makeUrl(type);
 
@@ -124,7 +128,18 @@ App.User = DS.Model.extend({
   password: DS.attr('string')
 });
 
-App.ApplicationController = Em.Controller.extend();
+App.ApplicationController = Em.Controller.extend({
+  connectRandomPoem: function() {
+    this.connectOutlet('poem', {
+      title: 'A poem.',
+      lines: [{text: 'Roses are red'},
+              {text: 'Violets are blue'},
+              {text: 'Yay!'}],
+      canEdit: true
+    });
+  }
+});
+
 App.ApplicationView = Em.View.extend({
   templateName: 'application'
 });
@@ -151,15 +166,7 @@ var router = Em.Router.create({
     home: Em.Route.extend({
       route: '/',
       connectOutlets: function(router, context) {
-        var poem = {
-          title: 'A poem.',
-          lines: [{text: 'Roses are red'},
-                  {text: 'Violets are blue'},
-                  {text: 'Yay!'}],
-          canEdit: true
-        };
-
-        router.get('applicationController').connectOutlet('poem', poem);
+        router.get('applicationController').connectRandomPoem();
       }
     })
   })
