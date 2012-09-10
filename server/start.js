@@ -30,6 +30,11 @@ var start = function(environment) {
   // Dev options.
   if (app.get('env') === 'development') {
     app.use(express.logger());
+    app.all('*', function(req, res, next) {
+      console.log('body:');
+      console.log(req.body);
+      next();
+    });
   }
 
   // Set up routing.
