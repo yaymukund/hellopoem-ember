@@ -1,3 +1,4 @@
 module.exports = function(app) {
-  require('./controllers/line_controller').initialize(app);
+  require('./resources/line').extend(app);
+  require('./resources/poem').extend(app);
 };

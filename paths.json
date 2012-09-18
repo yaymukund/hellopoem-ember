@@ -1,0 +1,29 @@
+{
+  "client": [
+    "client/models/**/*.js",
+    "client/controllers/**/*_controller.js",
+    "client/application.js",
+    "client/data_store.js",
+    "client/router.js"
+  ],
+
+  "server": [
+    "server/*.js",
+    "server/controllers/**/*.js",
+    "server/models/**/*.js",
+    "server/views/**/*.js"
+  ],
+
+  "template": {
+    "source": ["client/templates/**/*.hbs"],
+    "compiled": ["client/templates/compiled/**/*.js"],
+    "compile_directory": "client/templates/compiled"
+  },
+
+  "test": [
+    "server/test/**/*_test.js",
+    "client/test/**/*_test.js"
+  ],
+
+  "app": "server/public/vendor/hellopoem.js"
+}

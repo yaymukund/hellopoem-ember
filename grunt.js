@@ -1,48 +1,40 @@
 module.exports = function(grunt) {
-  var client_files = [
-    'client/application.js',
-    'client/data_store.js',
-    'client/models/**/*.js',
-    'client/controllers/**/*_controller.js',
-    'client/router.js'
-  ];
 
-  var server_files = [
-    'server/*.js',
-    'server/controllers/**/*.js',
-    'server/models/**/*.js',
-    'server/views/**/*.js'
-  ];
-
-  var template_files = ['client/templates/**/*.hbs'];
-  var compiled_templates = ['client/templates/compiled/**/*.js'];
-  var test_files = ['server/test/**/*.js', 'client/test/**/*.js'];
+  // TODO: Minify, separate dev and production configs.
 
   grunt.initConfig({
 
     // Metadata that can be used in the rest of this file.
     pkg: '<json:package.json>',
 
+    // Normally, we'd be able to use Grunt's `json` directive but it's
+    // evaluated after the config directive is evaluated. I think this is a bug.
+    paths: require('./paths'),
+
     // Compile ember templates.
     ember_handlebars: {
       all: {
-        src: template_files,
-        dest: 'client/templates/compiled'
+        src: '<config:paths.template.source>',
+        dest: '<config:paths.template.compile_directory>'
       }
     },
 
     // Concatenate all the client_files.
     concat: {
       all: {
-        src: client_files.concat(compiled_templates),
-        dest: 'server/public/vendor/<%= pkg.name %>.js'
+        src: [
+          '<config:paths.client>',
+          '<config:paths.template.compiled>'
+        ],
+
+        dest: '<config:paths.app>'
       }
     },
 
     // Run tests.
     mocha: {
       all: {
-        src: test_files,
+        src: '<config:paths.test>',
         options: {
           ui: 'bdd',
           reporter: 'tap'
@@ -53,21 +45,29 @@ module.exports = function(grunt) {
     // Watch for changes.
     watch: {
       client: {
-        files: client_files.concat(template_files),
+        files: [
+          '<config:paths.client>',
+          '<config:paths.template.source>'
+        ],
+
         tasks: 'build'
       },
 
       test: {
-        files: server_files.concat(test_files, client_files, compiled_templates),
+        files: [
+          '<config:paths.server>',
+          '<config:paths.test>',
+          '<config:paths.app>'
+        ],
+
         tasks: 'mocha'
       }
     }
-
-    // TODO: Minify, separate dev and production configs.
   });
 
-  grunt.loadTasks('tasks');
   grunt.loadNpmTasks('grunt-ember-handlebars');
+  grunt.loadNpmTasks('grunt-simple-mocha');
+  grunt.loadNpmTasks('grunt-shell');
 
   grunt.registerTask('build', ['ember_handlebars', 'concat']);
   grunt.registerTask('default', ['build', 'mocha']);
