@@ -5,7 +5,9 @@ var router = Em.Router.create({
   root: Em.Route.extend({
     home: Em.Route.extend({
       route: '/',
-      connectOutlets: router.get('applicationController').connectRandomPoem
+      connectOutlets: function(router, context) {
+        router.get('applicationController').connectRandomPoem();
+      }
     })
   })
 });

@@ -5,10 +5,12 @@ var Resource = require('ember-node-resources'),
 module.exports = Resource.Controller.create({
   resourceName: 'poem',
   db: db,
+  timestamps: true,
 
   properties: [
     'title',
-    'created_at'
+    'user_id',
+    'stanza_ids'
   ],
 
   actions: [{

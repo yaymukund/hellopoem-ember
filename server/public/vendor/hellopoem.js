@@ -1,80 +1,3 @@
-App.Line = DS.Model.extend({
-  user: DS.belongsTo('App.User'),
-
-  createdAt: DS.attr('date'),
-  text: DS.attr('string')
-});
-
-App.Poem = DS.Model.extend({
-  user: DS.belongsTo('App.User'),
-  stanzas: DS.hasMany('App.Stanza'),
-
-  lines: function() {
-    return this.get('stanzas').getEach('line');
-  }.property('stanzas'),
-
-  createdAt: DS.attr('date'),
-  title: DS.attr('string')
-});
-
-App.Poem.reopenClass({
-  random: function() {
-    jQuery.ajax({
-      url: '/lines/random',
-      dataType: 'json',
-      type: 'GET',
-      success: function(data) {
-        console.log('received data');
-        console.log(data);
-        App.store.load('App.Poem', data.id, data);
-      }
-    });
-  }
-});
-
-App.Stanza = DS.Model.extend({
-  lines: DS.hasMany('App.Line'),
-  poems: DS.hasMany('App.Poem')
-});
-
-App.User = DS.Model.extend({
-  poems: DS.hasMany('App.Poem'),
-
-  createdAt: DS.attr('date'),
-  username: DS.attr('string'),
-  password: DS.attr('string')
-});
-
-App.ApplicationController = Em.Controller.extend({
-  connectRandomPoem: function() {
-    this.connectOutlet('poem', {
-      title: 'A poem.',
-      lines: [{text: 'Roses are red'},
-              {text: 'Violets are blue'},
-              {text: 'Yay!'}],
-      canEdit: true
-    });
-  }
-});
-
-App.ApplicationView = Em.View.extend({
-  templateName: 'application'
-});
-
-App.HomeController = Em.Controller.extend({});
-App.HomeView = Em.View.extend({
-  templateName: 'home'
-});
-
-App.PoemController = Em.ObjectController.extend();
-
-App.PoemView = Em.View.extend({
-  templateName: 'poem',
-  classNames: ['poem']
-});
-
-App.EditPoemField = Em.TextField.extend();
-
 App = Em.Application.create();
 
 // Utility functions.
@@ -173,6 +96,76 @@ App.store = DS.Store.create({
   adapter: App.adapter
 });
 
+App.Line = DS.Model.extend({
+  user: DS.belongsTo('App.User'),
+  text: DS.attr('string'),
+  created_at: DS.attr('date'),
+  updated_at: DS.attr('date')
+});
+
+App.Poem = DS.Model.extend({
+  title: DS.attr('string'),
+  user: DS.belongsTo('App.User'),
+  stanzas: DS.hasMany('App.Stanza'),
+  created_at: DS.attr('date'),
+  updated_at: DS.attr('date'),
+
+  lines: function() {
+    return this.get('stanzas').getEach('line');
+  }.property('stanzas')
+});
+
+App.Poem.reopenClass({
+  random: function() {
+    jQuery.ajax({
+      url: '/poems/random',
+      dataType: 'json',
+      type: 'GET',
+      success: function(data) {
+        console.log('received data');
+        console.log(data);
+        App.store.load('App.Poem', data.id, data);
+      }
+    });
+  }
+});
+
+App.Stanza = DS.Model.extend({
+  poems: DS.belongsTo('App.Poem'),
+  lines: DS.hasMany('App.Line')
+});
+
+App.User = DS.Model.extend({
+  poems: DS.hasMany('App.Poem'),
+  username: DS.attr('string'),
+  created_at: DS.attr('date'),
+  updated_at: DS.attr('date')
+});
+
+App.ApplicationController = Em.Controller.extend({
+  connectRandomPoem: function() {
+    this.connectOutlet('poem', App.Poem.random());
+  }
+});
+
+App.ApplicationView = Em.View.extend({
+  templateName: 'application'
+});
+
+App.HomeController = Em.Controller.extend({});
+App.HomeView = Em.View.extend({
+  templateName: 'home'
+});
+
+App.PoemController = Em.ObjectController.extend();
+
+App.PoemView = Em.View.extend({
+  templateName: 'poem',
+  classNames: ['poem']
+});
+
+App.EditPoemField = Em.TextField.extend();
+
 var router = Em.Router.create({
   enableLogging: true,
   location: 'hash',
@@ -180,7 +173,9 @@ var router = Em.Router.create({
   root: Em.Route.extend({
     home: Em.Route.extend({
       route: '/',
-      connectOutlets: router.get('applicationController').connectRandomPoem
+      connectOutlets: function(router, context) {
+        router.get('applicationController').connectRandomPoem();
+      }
     })
   })
 });

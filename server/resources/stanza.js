@@ -3,12 +3,11 @@ var Resource = require('ember-node-resources'),
     callbacks = require('../callbacks');
 
 module.exports = Resource.Controller.create({
-  resourceName: 'line',
-  timestamps: true,
+  resourceName: 'stanza',
   db: db,
 
   properties: [
-    'user_id',
-    'text'
+    'poem_id',
+    'line_ids'
   ]
 });

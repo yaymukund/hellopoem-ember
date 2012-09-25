@@ -17,11 +17,13 @@
   "dependencies": {
     "express"                : "3.0.x",
     "redis"                  : "0.7.x",
+    "requireindex"           : "0.1.x",
     "connect-redis"          : "1.4.x",
     "step"                   : "0.0.x",
     "underscore"             : "1.3.x",
     "grunt"                  : "0.3.x",
     "grunt-ember-handlebars" : "0.1.x",
+    "grunt-shell"            : "0.1.x",
     "ember-node-resources"   : "https://github.com/yaymukund/ember-node-resources/tarball/master"
   },
 
@@ -31,7 +33,7 @@
     "should"            : "1.1.x",
     "zombie"            : "1.3.x",
     "supertest"         : "0.1.x",
-    "grunt-shell"       : "0.1.x"
+    "grunt-flush-redis" : "https://github.com/yaymukund/grunt-flush-redis/tarball/master"
   },
 
   "license" : "MIT",

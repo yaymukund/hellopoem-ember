@@ -1,4 +1,7 @@
+var resources = require('./resources');
+
 module.exports = function(app) {
-  require('./resources/line').extend(app);
-  require('./resources/poem').extend(app);
+  for (key in resources) {
+    resources[key].extend(app);
+  }
 };

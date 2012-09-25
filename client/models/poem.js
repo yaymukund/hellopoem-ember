@@ -1,19 +1,19 @@
 App.Poem = DS.Model.extend({
+  title: DS.attr('string'),
   user: DS.belongsTo('App.User'),
   stanzas: DS.hasMany('App.Stanza'),
+  created_at: DS.attr('date'),
+  updated_at: DS.attr('date'),
 
   lines: function() {
     return this.get('stanzas').getEach('line');
-  }.property('stanzas'),
-
-  createdAt: DS.attr('date'),
-  title: DS.attr('string')
+  }.property('stanzas')
 });
 
 App.Poem.reopenClass({
   random: function() {
     jQuery.ajax({
-      url: '/lines/random',
+      url: '/poems/random',
       dataType: 'json',
       type: 'GET',
       success: function(data) {

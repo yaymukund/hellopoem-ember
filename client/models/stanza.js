@@ -1,4 +1,4 @@
 App.Stanza = DS.Model.extend({
-  lines: DS.hasMany('App.Line'),
-  poems: DS.hasMany('App.Poem')
+  poems: DS.belongsTo('App.Poem'),
+  lines: DS.hasMany('App.Line')
 });

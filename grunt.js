@@ -60,15 +60,23 @@ module.exports = function(grunt) {
           '<config:paths.app>'
         ],
 
-        tasks: 'mocha'
+        tasks: 'flushredis mocha'
       }
+    },
+
+    shell: {
+      db: { command: 'redis-server server/config/redis-local.conf' },
+      app: { command: 'node server/start', stdout: true }
     }
   });
 
   grunt.loadNpmTasks('grunt-ember-handlebars');
   grunt.loadNpmTasks('grunt-simple-mocha');
+  grunt.loadNpmTasks('grunt-flush-redis');
   grunt.loadNpmTasks('grunt-shell');
 
   grunt.registerTask('build', ['ember_handlebars', 'concat']);
   grunt.registerTask('default', ['build', 'mocha']);
+  grunt.registerTask('db', ['shell:db']);
+  grunt.registerTask('app', ['shell:app']);
 };

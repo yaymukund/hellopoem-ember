@@ -1,6 +1,6 @@
 App.Line = DS.Model.extend({
   user: DS.belongsTo('App.User'),
-
-  createdAt: DS.attr('date'),
-  text: DS.attr('string')
+  text: DS.attr('string'),
+  created_at: DS.attr('date'),
+  updated_at: DS.attr('date')
 });

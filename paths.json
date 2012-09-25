@@ -1,9 +1,9 @@
 {
   "client": [
-    "client/models/**/*.js",
-    "client/controllers/**/*_controller.js",
     "client/application.js",
     "client/data_store.js",
+    "client/models/**/*.js",
+    "client/controllers/**/*_controller.js",
     "client/router.js"
   ],
 
