@@ -8,7 +8,6 @@ module.exports = Resource.Controller.create({
   timestamps: true,
 
   properties: [
-    'poem_ids',
     'username'
   ]
 });
