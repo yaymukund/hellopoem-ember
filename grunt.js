@@ -32,7 +32,7 @@ module.exports = function(grunt) {
     },
 
     // Run tests.
-    mocha: {
+    simplemocha: {
       all: {
         src: '<config:paths.test>',
         options: {
@@ -60,7 +60,7 @@ module.exports = function(grunt) {
           '<config:paths.app>'
         ],
 
-        tasks: 'flushredis mocha'
+        tasks: 'flushredis simplemocha'
       }
     },
 
@@ -76,7 +76,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-shell');
 
   grunt.registerTask('build', ['ember_handlebars', 'concat']);
-  grunt.registerTask('default', ['build', 'mocha']);
+  grunt.registerTask('default', ['build', 'simplemocha']);
   grunt.registerTask('db', ['shell:db']);
   grunt.registerTask('app', ['shell:app']);
 };
