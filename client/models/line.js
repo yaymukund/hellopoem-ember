@@ -1,8 +1,13 @@
 App.Line = DS.Model.extend({
-  user: DS.belongsTo('App.User'),
-  stanza: DS.belongsTo('App.Stanza'),
   text: DS.attr('string'),
 
-  created_at: DS.attr('date'),
-  updated_at: DS.attr('date')
+  created_at: DS.attr('string'),
+  updated_at: DS.attr('string')
+});
+
+DS.RESTAdapter.map('App.Line', {
+  text: {key: 'text'},
+
+  created_at: {key: 'created_at'},
+  updated_at: {key: 'updated_at'}
 });

@@ -1,112 +1,82 @@
+var util = {
+  constants: {
+    days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  },
+
+  pad: function(num) {
+    return (num < 10) ? '0' + num : num.toString();
+  },
+
+  dateToString: function(date) {
+    if (date == undefined) {
+      return undefined;
+    }
+
+    if (!(date instanceof Date)) {
+      return null;
+    }
+
+    var utcYear = date.getUTCFullYear(),
+        month = this.constants.months[date.getUTCMonth()],
+        dayOfMonth = this.pad(date.getUTCDate()),
+        dayOfWeek = this.constants.days[date.getUTCDay()],
+        utcHours = this.pad(date.getUTCHours()),
+        utcMinutes = this.pad(date.getUTCMinutes()),
+        utcSeconds = this.pad(date.getUTCSeconds());
+
+    return dayOfWeek + ', '
+         + dayOfMonth + ' '
+         + month + ' '
+         + utcYear + ' '
+         + utcHours + ':'
+         + utcMinutes + ':'
+         + utcSeconds + ' GMT';
+  },
+
+  stringToDate: function(serialized) {
+    var type = typeof serialized;
+
+    if (type === 'string' || type === 'number') {
+      return new Date(serialized);
+    }
+
+    if (serialized === null || serialized === undefined) {
+      // if the value is not present in the data,
+      // return undefined, not null.
+      return undefined;
+    }
+
+    return null;
+  }
+};
+
+// Make this usable on the server as well as the client!
+if (typeof module != 'undefined' && module.exports) {
+  module.exports = util;
+};
+
 App = Em.Application.create();
 
-// Utility functions.
-var modelName = function(type) {
-  // use the last part of the name as the URL
-  var parts = type.toString().split(".");
-  var name = parts[parts.length - 1];
-
-  // Do some sanitization.
-  return name.replace(/([A-Z])/g, '_$1').toLowerCase().slice(1);
-};
-
-var modelRoot = function(type) {
-  return '/' + modelName(type) + 's';
-};
-
-var makeUrl = function(type, id) {
-  var root = modelRoot(type);
-
-  if (id === null || id === undefined) {
-    return root;
-
-  } else {
-    return root + '/' + id;
-  }
-};
-
-var makeData = function(type, record) {
-  var data = {};
-  data[modelName(type)] = record.toJSON();
-  return data;
-};
-
-// Adapter.
-App.adapter = DS.Adapter.create({
-  find: function(store, type, id) {
-    var url = makeUrl(type, id);
-
-    jQuery.getJSON(url, function(data) {
-      store.load(type, id, data);
-    });
-  },
-
-  random: function(store, type) {
-    jQuery.ajax({});
-  },
-
-  createRecord: function(store, type, record) {
-    var url = makeUrl(type);
-
-    jQuery.ajax({
-      url: url,
-      data: makeData(type, record),
-      dataType: 'json',
-      type: 'POST',
-
-      success: function(data) {
-        store.didCreateRecord(record, data);
-      }
-    });
-  },
-
-  updateRecord: function(store, type, record) {
-    var url = makeUrl(type, record.get('id'));
-
-    jQuery.ajax({
-      url: url,
-      data: makeData(type, record),
-      dataType: 'json',
-      type: 'PUT',
-
-      success: function(data) {
-        store.didUpdateRecord(record, data);
-      }
-    });
-  },
-
-  deleteRecord: function(store, type, record) {
-    var url = makeUrl(type, record.get('id'));
-
-    jQuery.ajax({
-      url: url,
-      dataType: 'json',
-      type: 'DELETE',
-
-      success: function() {
-        store.didDeleteRecord(record);
-      }
-    });
-  }
-});
-
-// Attach the adapter to App.
-App.store = DS.Store.create({
-  revision: 4,
-  adapter: App.adapter
-});
-
 App.Line = DS.Model.extend({
-  user: DS.belongsTo('App.User'),
   text: DS.attr('string'),
-  created_at: DS.attr('date'),
-  updated_at: DS.attr('date')
+
+  created_at: DS.attr('string'),
+  updated_at: DS.attr('string')
+});
+
+DS.RESTAdapter.map('App.Line', {
+  text: {key: 'text'},
+
+  created_at: {key: 'created_at'},
+  updated_at: {key: 'updated_at'}
 });
 
 App.Poem = DS.Model.extend({
   title: DS.attr('string'),
   user: DS.belongsTo('App.User'),
-  stanzas: DS.hasMany('App.Stanza'),
+  stanzas: DS.hasMany('App.Stanza', {key: 'stanza_ids'}),
+
   created_at: DS.attr('date'),
   updated_at: DS.attr('date'),
 
@@ -117,29 +87,42 @@ App.Poem = DS.Model.extend({
 
 App.Poem.reopenClass({
   random: function() {
-    jQuery.ajax({
-      url: '/poems/random',
-      dataType: 'json',
-      type: 'GET',
-      success: function(data) {
-        console.log('received data');
-        console.log(data);
-        App.store.load('App.Poem', data.id, data);
-      }
+    jQuery.getJSON('/poems/random', function(data) {
+      App.store.load('App.Poem', data.id, data);
     });
   }
 });
 
 App.Stanza = DS.Model.extend({
-  poems: DS.belongsTo('App.Poem'),
-  lines: DS.hasMany('App.Line')
+  poem: DS.belongsTo('App.Poem'),
+  lines: DS.hasMany('App.Line', {key: 'line_ids'})
 });
 
 App.User = DS.Model.extend({
-  poems: DS.hasMany('App.Poem'),
   username: DS.attr('string'),
+  poems: DS.hasMany('App.Poem'),
+  lines: DS.hasMany('App.Line'),
+
   created_at: DS.attr('date'),
   updated_at: DS.attr('date')
+});
+
+// Adapter.
+App.Adapter = DS.RESTAdapter;
+
+// Create the adapter.
+App.adapter = App.Adapter.create({ bulkCommit: false });
+
+// Transforms for serializing different types.
+App.adapter.registerTransform('date', {
+  fromJSON: util.stringToDate.bind(util),
+  toJSON: util.dateToString.bind(util)
+});
+
+// Attach the adapter to App.
+App.store = DS.Store.extend({
+  revision: 6,
+  adapter: App.adapter
 });
 
 App.ApplicationController = Em.Controller.extend({

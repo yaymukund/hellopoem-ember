@@ -9,7 +9,6 @@ module.exports = Resource.Controller.create({
 
   properties: [
     'user_id',
-    'stanza_id',
     'text'
   ]
 });
