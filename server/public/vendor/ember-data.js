@@ -33,6 +33,7 @@ DS.RecordArray = Ember.ArrayProxy.extend(Ember.Evented, {
   content: null,
 
   isLoaded: false,
+  isUpdating: false,
 
   // The store that created this record array.
   store: null,
@@ -55,6 +56,15 @@ DS.RecordArray = Ember.ArrayProxy.extend(Ember.Evented, {
       return this.objectAt(index);
     }
   },
+
+  update: function() {
+    if (get(this, 'isUpdating')) { return; }
+
+    var store = get(this, 'store'),
+        type = get(this, 'type');
+
+    store.fetchAll(type, this);
+  }
 });
 
 })();
@@ -550,7 +560,7 @@ var RelationshipLink = function(parent, child) {
 
   Add records to a transaction using the `add()` method:
 
-      record = App.store.find(Person, 1);
+      record = App.store.find(App.Person, 1);
       transaction.add(record);
 
   Note that only records whose `isDirty` flag is `false` may be added
@@ -567,7 +577,7 @@ var RelationshipLink = function(parent, child) {
   For example, instead of this:
 
     var transaction = store.transaction();
-    var person = Person.createRecord({ name: "Steve" });
+    var person = App.Person.createRecord({ name: "Steve" });
 
     // won't work because person is dirty
     transaction.add(person);
@@ -575,7 +585,7 @@ var RelationshipLink = function(parent, child) {
   Call `createRecord()` on the transaction directly:
 
     var transaction = store.transaction();
-    transaction.createRecord(Person, { name: "Steve" });
+    transaction.createRecord(App.Person, { name: "Steve" });
 
   ### Asynchronous Commits
 
@@ -684,6 +694,7 @@ DS.Transaction = Ember.Object.extend({
   commit: function() {
     var store = get(this, 'store');
     var adapter = get(store, '_adapter');
+    var defaultTransaction = get(store, 'defaultTransaction');
 
     var iterate = function(records) {
       var set = records.copy();
@@ -701,6 +712,10 @@ DS.Transaction = Ember.Object.extend({
       deleted: iterate(this.bucketForType('deleted')),
       relationships: relationships
     };
+
+    if (this === defaultTransaction) {
+      set(store, 'defaultTransaction', store.transaction());
+    }
 
     this.removeCleanRecords();
 
@@ -1121,7 +1136,7 @@ DS.Store = Ember.Object.extend({
     }
 
     return adapter;
-  }).property('adapter').cacheable(),
+  }).property('adapter'),
 
   /**
     @private
@@ -1333,7 +1348,7 @@ DS.Store = Ember.Object.extend({
     // let the adapter set the data, possibly async
     var adapter = get(this, '_adapter');
     if (adapter && adapter.find) { adapter.find(this, type, id); }
-    else { throw fmt("Adapter is either null or does not implement `find` method", this); }
+    else { throw "Adapter is either null or does not implement `find` method"; }
 
     return record;
   },
@@ -1446,7 +1461,7 @@ DS.Store = Ember.Object.extend({
 
     var adapter = get(this, '_adapter');
     if (adapter && adapter.findMany) { adapter.findMany(this, type, neededIds); }
-    else { throw fmt("Adapter is either null or does not implement `findMany` method", this); }
+    else { throw "Adapter is either null or does not implement `findMany` method"; }
   },
 
   /**
@@ -1469,7 +1484,7 @@ DS.Store = Ember.Object.extend({
     * ask the adapter to load the unloaded elements, by invoking
       findMany with the still-unloaded IDs.
   */
-  findMany: function(type, ids) {
+  findMany: function(type, ids, record, relationship) {
     // 1. Convert ids to client ids
     // 2. Determine which of the client ids need to be loaded
     // 3. Create a new ManyArray whose content is ALL of the clientIds
@@ -1478,6 +1493,14 @@ DS.Store = Ember.Object.extend({
     //    the needed clientIds
     // 6. Ask the adapter to load the records for the unloaded clientIds (but
     //    convert them back to ids)
+
+    if (!Ember.isArray(ids)) {
+      var adapter = get(this, '_adapter');
+      if (adapter && adapter.findAssociation) { adapter.findAssociation(this, record, relationship, ids); }
+      else { throw fmt("Adapter is either null or does not implement `findMany` method", this); }
+
+      return this.createManyArray(type, Ember.A());
+    }
 
     ids = map(ids, function(id) { return coerceId(id); });
     var clientIds = this.clientIdsForIds(type, ids);
@@ -1524,45 +1547,79 @@ DS.Store = Ember.Object.extend({
 
     @param {Class} type
     @param {Object} query an opaque query to be used by the adapter
+    @return {DS.AdapterPopulatedRecordArray}
   */
   findQuery: function(type, query) {
-    var array = DS.AdapterPopulatedRecordArray.create({ type: type, content: Ember.A([]), store: this });
+    var array = DS.AdapterPopulatedRecordArray.create({ type: type, query: query, content: Ember.A([]), store: this });
     var adapter = get(this, '_adapter');
     if (adapter && adapter.findQuery) { adapter.findQuery(this, type, query, array); }
-    else { throw fmt("Adapter is either null or does not implement `findQuery` method", this); }
+    else { throw "Adapter is either null or does not implement `findQuery` method"; }
     return array;
   },
 
   /**
     @private
 
+    This method returns an array of all records adapter can find.
+    It triggers the adapter's `findAll` method to give it an opportunity to populate
+    the array with records of that type.
+
+    @param {Class} type
+    @return {DS.AdapterPopulatedRecordArray}
+  */
+  findAll: function(type) {
+    var array = this.all(type);
+    this.fetchAll(type, array);
+    return array;
+  },
+
+  /**
+    @private
+  */
+  fetchAll: function(type, array) {
+    var sinceToken = this.typeMapFor(type).sinceToken,
+        adapter = get(this, '_adapter');
+
+    set(array, 'isUpdating', true);
+
+    if (adapter && adapter.findAll) { adapter.findAll(this, type, sinceToken); }
+    else { throw "Adapter is either null or does not implement `findAll` method"; }
+  },
+
+  /**
+  */
+  sinceForType: function(type, sinceToken) {
+    this.typeMapFor(type).sinceToken = sinceToken;
+  },
+
+  /**
+  */
+  didUpdateAll: function(type) {
+    var findAllCache = this.typeMapFor(type).findAllCache;
+    set(findAllCache, 'isUpdating', false);
+  },
+
+  /**
     This method returns a filtered array that contains all of the known records
     for a given type.
 
-    It also triggers the adapter's `findAll` method to give it an opportunity
-    to populate records of that type.
-
-    Note that because it's just a filter, the array may have items in it before
-    the adapter's `findAll` method provides data. It will also have any locally
+    Note that because it's just a filter, it will have any locally
     created records of the type.
 
-    Also note that multiple calls to `findAll` for a given type will always
+    Also note that multiple calls to `all` for a given type will always
     return the same RecordArray.
 
     @param {Class} type
     @return {DS.RecordArray}
   */
-  findAll: function(type) {
+  all: function(type) {
     var typeMap = this.typeMapFor(type),
         findAllCache = typeMap.findAllCache;
 
     if (findAllCache) { return findAllCache; }
 
-    var array = DS.RecordArray.create({ type: type, content: Ember.A([]), store: this });
+    var array = DS.RecordArray.create({ type: type, content: Ember.A([]), store: this, isLoaded: true });
     this.registerRecordArray(array, type);
-
-    var adapter = get(this, '_adapter');
-    if (adapter && adapter.findAll) { adapter.findAll(this, type); }
 
     typeMap.findAllCache = array;
     return array;
@@ -1670,10 +1727,7 @@ DS.Store = Ember.Object.extend({
     a transaction.
   */
   commit: function() {
-    var defaultTransaction = get(this, 'defaultTransaction');
-    set(this, 'defaultTransaction', this.transaction());
-
-    defaultTransaction.commit();
+    get(this, 'defaultTransaction').commit();
   },
 
   /**
@@ -1858,6 +1912,11 @@ DS.Store = Ember.Object.extend({
   */
   didUpdateRelationship: function(relationship) {
     relationship.adapterDidUpdate();
+  },
+
+  materializeHasMany: function(record, name, ids) {
+    record.materializeHasMany(name, ids);
+    record.adapterDidUpdateHasMany(name);
   },
 
   /**
@@ -2130,6 +2189,8 @@ DS.Store = Ember.Object.extend({
 
     Return a list of all `DS.RecordArray`s a clientId is
     part of.
+
+    @return {Object(clientId: Ember.OrderedSet)}
   */
   recordArraysForClientId: function(clientId) {
     var recordArrays = get(this, 'recordArraysByClientId');
@@ -2407,8 +2468,8 @@ var get = Ember.get, set = Ember.set, guidFor = Ember.guidFor;
   string. You can determine a record's current state by getting its manager's
   current state path:
 
-        record.get('stateManager.currentState.path');
-        //=> "created.uncommitted"
+      record.get('stateManager.currentPath');
+      //=> "created.uncommitted"
 
   The `DS.Model` states are themselves stateless. What we mean is that,
   though each instance of a record also has a unique instance of a
@@ -2493,7 +2554,7 @@ var get = Ember.get, set = Ember.set, guidFor = Ember.guidFor;
   state in a more user-friendly way than examining its state path. For example,
   instead of doing this:
 
-      var statePath = record.get('stateManager.currentState.path');
+      var statePath = record.get('stateManager.currentPath');
       if (statePath === 'created.inFlight') {
         doSomething();
       }
@@ -3122,7 +3183,7 @@ var get = Ember.get, set = Ember.set, none = Ember.none;
 
 var retrieveFromCurrentState = Ember.computed(function(key) {
   return get(get(this, 'stateManager.currentState'), key);
-}).property('stateManager.currentState').cacheable();
+}).property('stateManager.currentState');
 
 DS.Model = Ember.Object.extend(Ember.Evented, {
   isLoaded: retrieveFromCurrentState,
@@ -3168,7 +3229,7 @@ DS.Model = Ember.Object.extend(Ember.Evented, {
     }
 
     return this._data;
-  }).property().cacheable(),
+  }).property(),
 
   materializeData: function() {
     this.setupData();
@@ -3497,6 +3558,34 @@ DS.Model = Ember.Object.extend(Ember.Evented, {
     this.updateRecordArraysLater();
   },
 
+  adapterDidUpdateHasMany: function(name) {
+    this.removeInFlightDirtyFactor(name);
+
+    var cachedValue = this.cacheFor(name),
+        hasMany = get(this, 'data').hasMany,
+        store = get(this, 'store');
+
+    var associations = get(this.constructor, 'associationsByName'),
+        association = associations.get(name),
+        idToClientId = store.idToClientId;
+
+    if (cachedValue) {
+      var key = name,
+          ids = hasMany[key] || [];
+
+      var clientIds;
+
+      clientIds = Ember.EnumerableUtils.map(ids, function(id) {
+        return store.clientIdForId(association.type, id);
+      });
+
+      set(cachedValue, 'content', Ember.A(clientIds));
+      set(cachedValue, 'isLoaded', true);
+    }
+
+    this.updateRecordArraysLater();
+  },
+
   adapterDidDelete: function() {
     this.removeInFlightDirtyFactor('@deleted');
 
@@ -3542,6 +3631,7 @@ var storeAlias = function(methodName) {
 DS.Model.reopenClass({
   isLoaded: storeAlias('recordIsLoaded'),
   find: storeAlias('find'),
+  all: storeAlias('all'),
   filter: storeAlias('filter'),
 
   _create: DS.Model.create,
@@ -3573,7 +3663,7 @@ DS.Model.reopenClass({
     });
 
     return map;
-  }).cacheable()
+  })
 });
 
 DS.Model.reopen({
@@ -3618,7 +3708,7 @@ DS.attr = function(type, options) {
   // `data` is never set directly. However, it may be
   // invalidated from the state manager's setData
   // event.
-  }).property('data').cacheable().meta(meta);
+  }).property('data').meta(meta);
 };
 
 
@@ -3655,7 +3745,7 @@ var hasAssociation = function(type, options, one) {
 
     id = data[key];
     return id ? store.find(type, id) : null;
-  }).property('data').cacheable().meta(meta);
+  }).property('data').meta(meta);
 };
 
 DS.belongsTo = function(type, options) {
@@ -3722,12 +3812,12 @@ var hasAssociation = function(type, options) {
     }
 
     ids = data[key];
-    association = store.findMany(type, ids || []);
+    association = store.findMany(type, ids || [], this, meta);
     set(association, 'owner', this);
     set(association, 'name', key);
 
     return association;
-  }).property().cacheable().meta(meta);
+  }).property().meta(meta);
 };
 
 DS.hasMany = function(type, options) {
@@ -3784,7 +3874,7 @@ DS.Model.reopenClass({
     });
 
     return map;
-  }).cacheable(),
+  }),
 
   associationNames: Ember.computed(function() {
     var names = { hasMany: [], belongsTo: [] };
@@ -3796,7 +3886,7 @@ DS.Model.reopenClass({
     });
 
     return names;
-  }).cacheable(),
+  }),
 
   associationsByName: Ember.computed(function() {
     var map = Ember.Map.create(), type;
@@ -3816,7 +3906,7 @@ DS.Model.reopenClass({
     });
 
     return map;
-  }).cacheable(),
+  }),
 
   fields: Ember.computed(function() {
     var map = Ember.Map.create(), type;
@@ -3830,7 +3920,7 @@ DS.Model.reopenClass({
     });
 
     return map;
-  }).cacheable()
+  })
 });
 
 DS.Model.reopen({
@@ -4244,6 +4334,7 @@ Ember.onLoad('Ember.Application', function(Application) {
     before: "controllers",
 
     injection: function(app, stateManager, property) {
+      if (!stateManager) { return; }
       if (property === 'Store') {
         set(stateManager, 'store', app[property].create());
       }
@@ -4255,10 +4346,12 @@ Ember.onLoad('Ember.Application', function(Application) {
     after: ['store','controllers'],
 
     injection: function(app, stateManager, property) {
+      if (!stateManager) { return; }
       if (/^[A-Z].*Controller$/.test(property)) {
         var controllerName = property.charAt(0).toLowerCase() + property.substr(1);
         var store = stateManager.get('store');
         var controller = stateManager.get(controllerName);
+        if(!controller) { return; }
 
         controller.set('store', store);
       }
@@ -4481,7 +4574,7 @@ DS.Serializer = Ember.Object.extend({
   transformValueToJSON: function(value, attributeType) {
     var transform = this.transforms[attributeType];
 
-    Ember.assert("You tried to use a attribute type (" + attributeType + ") that has not been registered", transform);
+    Ember.assert("You tried to use an attribute type (" + attributeType + ") that has not been registered", transform);
     return transform.toJSON(value);
   },
 
@@ -5091,24 +5184,38 @@ DS.fixtureAdapter = DS.FixtureAdapter.create();
 
 
 (function() {
-/*global jQuery*/
+var get = Ember.get;
 
-var get = Ember.get, set = Ember.set;
-
-var serializer = DS.Serializer.create({
+DS.RESTSerializer = DS.Serializer.create({
   keyForBelongsTo: function(type, name) {
     return this.keyForAttributeName(type, name) + "_id";
   },
 
   keyForAttributeName: function(type, name) {
     return Ember.String.decamelize(name);
+  },
+
+  addBelongsTo: function(hash, record, key, relationship) {
+    var hashKey = this._keyForBelongsTo(record.constructor, key),
+        id = get(record, key+'.id');
+
+    if (!Ember.none(id)) { hash[hashKey] = id; }
   }
 });
 
+})();
+
+
+
+(function() {
+/*global jQuery*/
+
+var get = Ember.get, set = Ember.set;
+
 DS.RESTAdapter = DS.Adapter.extend({
   bulkCommit: false,
-	
-  serializer: serializer,
+
+  serializer: DS.RESTSerializer,
 
   shouldCommit: function(record) {
     if (record.isCommittingBecause('attribute') || record.isCommittingBecause('belongsTo')) {
@@ -5132,7 +5239,6 @@ DS.RESTAdapter = DS.Adapter.extend({
   },
 
   didCreateRecord: function(store, type, record, json) {
-    console.log(arguments);
     var root = this.rootForType(type);
 
     this.sideload(store, type, json, root);
@@ -5272,47 +5378,78 @@ DS.RESTAdapter = DS.Adapter.extend({
 
     this.ajax(this.buildURL(root, id), "GET", {
       success: function(json) {
-        this.sideload(store, type, json, root);
-        store.load(type, json[root]);
+        this.didFindRecord(store, type, json, id);
       }
     });
   },
 
-  findMany: function(store, type, ids) {
-    ids = this.get('serializer').serializeIds(ids);
+  didFindRecord: function(store, type, json, id) {
+    var root = this.rootForType(type);
 
-    var root = this.rootForType(type), plural = this.pluralize(root);
+    this.sideload(store, type, json, root);
+    store.load(type, id, json[root]);
+  },
+
+  findAll: function(store, type, since) {
+    var root = this.rootForType(type);
 
     this.ajax(this.buildURL(root), "GET", {
-      data: { ids: ids },
+      data: this.sinceQuery(since),
       success: function(json) {
-        this.sideload(store, type, json, plural);
-        store.loadMany(type, json[plural]);
+        this.didFindAll(store, type, json);
       }
     });
   },
 
-  findAll: function(store, type) {
-    var root = this.rootForType(type), plural = this.pluralize(root);
+  didFindAll: function(store, type, json) {
+    var root = this.pluralize(this.rootForType(type)),
+        since = this.extractSince(json);
 
-    this.ajax(this.buildURL(root), "GET", {
-      success: function(json) {
-        this.sideload(store, type, json, plural);
-        store.loadMany(type, json[plural]);
-      }
-    });
+    this.sideload(store, type, json, root);
+    store.loadMany(type, json[root]);
+
+    // this registers the id with the store, so it will be passed
+    // into the next call to `findAll`
+    if (since) { store.sinceForType(type, since); }
+
+    store.didUpdateAll(type);
   },
 
   findQuery: function(store, type, query, recordArray) {
-    var root = this.rootForType(type), plural = this.pluralize(root);
+    var root = this.rootForType(type);
 
     this.ajax(this.buildURL(root), "GET", {
       data: query,
       success: function(json) {
-        this.sideload(store, type, json, plural);
-        recordArray.load(json[plural]);
+        this.didFindQuery(store, type, json, recordArray);
       }
     });
+  },
+
+  didFindQuery: function(store, type, json, recordArray) {
+    var root = this.pluralize(this.rootForType(type));
+
+    this.sideload(store, type, json, root);
+    recordArray.load(json[root]);
+  },
+
+  findMany: function(store, type, ids) {
+    var root = this.rootForType(type);
+    ids = get(this, 'serializer').serializeIds(ids);
+
+    this.ajax(this.buildURL(root), "GET", {
+      data: {ids: ids},
+      success: function(json) {
+        this.didFindMany(store, type, json);
+      }
+    });
+  },
+
+  didFindMany: function(store, type, json) {
+    var root = this.pluralize(this.rootForType(type));
+
+    this.sideload(store, type, json, root);
+    store.loadMany(type, json[root]);
   },
 
   // HELPERS
@@ -5356,6 +5493,7 @@ DS.RESTAdapter = DS.Adapter.extend({
     for (var prop in json) {
       if (!json.hasOwnProperty(prop)) { continue; }
       if (prop === root) { continue; }
+      if (prop === get(this, 'meta')) { continue; }
 
       sideloadedType = type.typeForAssociation(prop);
 
@@ -5400,8 +5538,10 @@ DS.RESTAdapter = DS.Adapter.extend({
     }
   },
 
+  url: "",
+
   buildURL: function(record, suffix) {
-    var url = [""];
+    var url = [this.url];
 
     Ember.assert("Namespace URL (" + this.namespace + ") must not start with slash", !this.namespace || this.namespace.toString().charAt(0) !== "/");
     Ember.assert("Record URL (" + record + ") must not start with slash", !record || record.toString().charAt(0) !== "/");
@@ -5417,6 +5557,24 @@ DS.RESTAdapter = DS.Adapter.extend({
     }
 
     return url.join("/");
+  },
+
+  meta: 'meta',
+  since: 'since',
+
+  sinceQuery: function(since) {
+    var query = {};
+    query[get(this, 'since')] = since;
+    return since ? query : null;
+  },
+
+  extractSince: function(json) {
+    var meta = this.extractMeta(json);
+    return meta[get(this, 'since')] || null;
+  },
+
+  extractMeta: function(json) {
+    return json[get(this, 'meta')] || {};
   }
 });
 
