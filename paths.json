@@ -1,6 +1,6 @@
 {
   "client": [
-    "client/util.js",
+    "shared/util.js",
     "client/application.js",
     "client/models/**/*.js",
     "client/store.js",

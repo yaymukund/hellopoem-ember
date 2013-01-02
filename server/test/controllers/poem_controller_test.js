@@ -2,7 +2,6 @@ var request = require('supertest'),
     app = require('../../../server/start')('development'),
     db = require('../../db').connection(),
     _ = require('underscore'),
-    Step = require('step'),
     should = require('should');
 
 describe('GET /poems/random', function() {
@@ -23,18 +22,12 @@ describe('GET /poems/random', function() {
   });
 
   it('responds with any resource', function(done) {
-    Step(
-      function performRandom() {
-        request(app)
-          .get('/poems/random')
-          .end(this);
-      },
-
-      function checkResponse(err, res) {
+    request(app)
+      .get('/poems/random')
+      .end(function(err, res) {
         should.not.exist(err);
         res.body.should.have.property('id');
         done();
-      }
-    )
+      });
   });
 });

@@ -11,7 +11,7 @@ App.adapter.registerTransform('date', {
 });
 
 // Attach the adapter to App.
-App.store = DS.Store.extend({
+App.store = DS.Store.create({
   revision: 6,
   adapter: App.adapter
 });

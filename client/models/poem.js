@@ -14,7 +14,9 @@ App.Poem = DS.Model.extend({
 App.Poem.reopenClass({
   random: function() {
     jQuery.getJSON('/poems/random', function(data) {
-      App.store.load('App.Poem', data.id, data);
+      if (data.poem) {
+        App.store.load('App.Poem', data.poem.id, data.poem);
+      }
     });
   }
 });

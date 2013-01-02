@@ -52,6 +52,6 @@ var util = {
 };
 
 // Make this usable on the server as well as the client!
-if (module.exports) {
+if (typeof module != 'undefined' && module.exports) {
   module.exports = util;
 };

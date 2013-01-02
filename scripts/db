@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+redis-server ~/src/hellopoem-ember/server/config/redis-local.conf
