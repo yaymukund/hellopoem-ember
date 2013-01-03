@@ -1,4 +1,13 @@
 var redis = require('redis'),
-    _     = require('underscore');
+    ran,
+    client;
 
-exports.connection = _.once(redis.createClient);
+exports.connection = function() {
+  if (ran) {
+    return client;
+
+  } else {
+    ran = true;
+    client = redis.createClient();
+  }
+}

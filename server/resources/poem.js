@@ -19,6 +19,7 @@ module.exports = Resource.Controller.create({
     callbacks: [
       callbacks.randomId,
       Resource.Callbacks.show,
+      Resource.Callbacks.renderResource,
       Resource.Callbacks.respond
     ]
   }]

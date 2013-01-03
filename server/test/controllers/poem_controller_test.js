@@ -1,7 +1,6 @@
 var request = require('supertest'),
     app = require('../../../server/start')('development'),
     db = require('../../db').connection(),
-    _ = require('underscore'),
     should = require('should');
 
 describe('GET /poems/random', function() {
@@ -26,7 +25,7 @@ describe('GET /poems/random', function() {
       .get('/poems/random')
       .end(function(err, res) {
         should.not.exist(err);
-        res.body.should.have.property('id');
+        res.body.poem.should.have.property('id');
         done();
       });
   });
