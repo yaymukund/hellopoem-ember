@@ -1,4 +1,10 @@
+var path = require('path');
+
 module.exports = function(grunt) {
+
+  var filenameWithoutExtension = function(filename) {
+    return path.basename(filename, path.extname(filename));
+  };
 
   // TODO: Minify, separate dev and production configs.
 
@@ -8,7 +14,9 @@ module.exports = function(grunt) {
     handlebars: {
       options: {
         wrapped: true,
-        namespace: 'Ember.TEMPLATES'
+        namespace: 'Ember.TEMPLATES',
+        processName: filenameWithoutExtension,
+        processPartialName: filenameWithoutExtension
       },
 
       all: {
@@ -19,15 +27,36 @@ module.exports = function(grunt) {
 
     // Concatenate all the client_files.
     concat: {
-      all: {
+      client_utils: {
         src: [
-          'shared/util.js',
+          'util/head.js',
+          'util/shared/*.js',
+          'util/client/*.js'
+        ],
+
+        dest: 'tmp/client_utils.js'
+      },
+
+      server_utils: {
+        src: [
+          'util/head.js',
+          'util/shared/*.js',
+          'util/server/*.js',
+          'util/server_tail.js'
+        ],
+
+        dest: 'util/server_index.js'
+      },
+
+      client: {
+        src: [
+          '<%= handlebars.all.dest %>',
           'client/application.js',
+          '<%= concat.client_utils.dest %>',
           'client/models/**/*.js',
           'client/store.js',
           'client/controllers/**/*_controller.js',
-          'client/router.js',
-          '<%= handlebars.all.dest %>'
+          'client/router.js'
         ],
 
         dest: 'server/public/vendor/hellopoem.js'
@@ -63,6 +92,7 @@ module.exports = function(grunt) {
       test: {
         files: [
           // Server files.
+          "shared/*.js",
           "server/*.js",
           "server/controllers/**/*.js",
           "server/models/**/*.js",
@@ -83,6 +113,6 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-simple-mocha');
   grunt.loadNpmTasks('grunt-flush-redis');
 
-  grunt.registerTask('build', ['handlebars', 'concat']);
+  grunt.registerTask('build', ['handlebars', 'concat:server_utils', 'concat:client_utils', 'concat:client']);
   grunt.registerTask('default', ['build', 'simplemocha']);
 };

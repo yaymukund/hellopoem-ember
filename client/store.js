@@ -6,8 +6,8 @@ App.adapter = App.Adapter.create({ bulkCommit: false });
 
 // Transforms for serializing different types.
 App.adapter.registerTransform('date', {
-  fromJSON: util.stringToDate.bind(util),
-  toJSON: util.dateToString.bind(util)
+  fromJSON: App.Util.stringToDate.bind(App.Util),
+  toJSON: App.Util.dateToString.bind(App.Util)
 });
 
 // Attach the adapter to App.
