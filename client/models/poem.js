@@ -1,7 +1,7 @@
 App.Poem = DS.Model.extend({
   title: DS.attr('string'),
   user: DS.belongsTo('App.User'),
-  stanzas: DS.hasMany('App.Stanza', {key: 'stanza_ids'}),
+  stanzas: DS.hasMany('App.Stanza'),
 
   created_at: DS.attr('date'),
   updated_at: DS.attr('date'),

@@ -7,10 +7,10 @@ module.exports = Resource.Controller.create({
   db: db,
   timestamps: true,
 
-  properties: [
-    'title',
-    'user_id'
-  ],
+  properties: {
+    title: 'string',
+    user_id: 'string'
+  },
 
   actions: [{
     name: 'random',

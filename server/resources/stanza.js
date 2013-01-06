@@ -6,8 +6,8 @@ module.exports = Resource.Controller.create({
   resourceName: 'stanza',
   db: db,
 
-  properties: [
-    'poem_id',
-    'line_ids'
-  ]
+  properties: {
+    poem_id: 'string',
+    lines: 'array'
+  }
 });

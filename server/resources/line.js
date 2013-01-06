@@ -7,8 +7,8 @@ module.exports = Resource.Controller.create({
   timestamps: true,
   db: db,
 
-  properties: [
-    'user_id',
-    'text'
-  ]
+  properties: {
+    user_id: 'string',
+    text: 'string'
+  }
 });

@@ -7,7 +7,7 @@ module.exports = Resource.Controller.create({
   db: db,
   timestamps: true,
 
-  properties: [
-    'username'
-  ]
+  properties: {
+    username: 'string'
+  }
 });
