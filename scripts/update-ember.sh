@@ -9,7 +9,7 @@ echo 'Pulling Ember'
 git pull
 
 echo 'Compiling Ember'
-rake
+bundle exec rake
 
 echo 'Copying files'
 cp dist/ember.js "$vendor_dir"
@@ -21,7 +21,7 @@ echo 'Pulling ember-data'
 git pull
 
 echo 'Compiling Ember Data'
-rake
+bundle exec rake
 
 echo 'Copying files'
 cp dist/ember-data.js "$vendor_dir"

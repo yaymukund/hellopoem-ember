@@ -82,7 +82,9 @@ module.exports = function(grunt) {
     watch: {
       client: {
         files: [
-          '<%= concat.all.src %>',
+          '<%= concat.client.src %>',
+          '<%= concat.client_utils.src %>',
+          '<%= concat.server_utils.src %>',
           '<%= handlebars.all.src %>'
         ],
 
@@ -99,7 +101,7 @@ module.exports = function(grunt) {
           "server/views/**/*.js",
 
           '<%= simplemocha.all.src %>',
-          '<%= concat.all.dest %>'
+          '<%= concat.client.dest %>'
         ],
 
         tasks: ['flushredis', 'simplemocha']
