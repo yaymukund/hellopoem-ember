@@ -2,21 +2,16 @@ var path = require('path');
 
 module.exports = function(grunt) {
 
-  var filenameWithoutExtension = function(filename) {
-    return path.basename(filename, path.extname(filename));
-  };
-
   // TODO: Minify, separate dev and production configs.
 
   grunt.initConfig({
 
     // Compile ember templates.
-    handlebars: {
+    ember_templates: {
       options: {
-        wrapped: true,
-        namespace: 'Ember.TEMPLATES',
-        processName: filenameWithoutExtension,
-        processPartialName: filenameWithoutExtension
+        templateName: function(filename) {
+          return path.basename(filename, path.extname(filename));
+        }
       },
 
       all: {
@@ -50,7 +45,7 @@ module.exports = function(grunt) {
 
       client: {
         src: [
-          '<%= handlebars.all.dest %>',
+          '<%= ember_templates.all.dest %>',
           'client/application.js',
           '<%= concat.client_utils.dest %>',
           'client/models/**/*.js',
@@ -85,7 +80,7 @@ module.exports = function(grunt) {
           '<%= concat.client.src %>',
           '<%= concat.client_utils.src %>',
           '<%= concat.server_utils.src %>',
-          '<%= handlebars.all.src %>'
+          '<%= ember_templates.all.src %>'
         ],
 
         tasks: 'build'
@@ -109,12 +104,12 @@ module.exports = function(grunt) {
     }
   });
 
-  grunt.loadNpmTasks('grunt-contrib-handlebars');
+  grunt.loadNpmTasks('grunt-ember-templates');
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-simple-mocha');
   grunt.loadNpmTasks('grunt-flush-redis');
 
-  grunt.registerTask('build', ['handlebars', 'concat:server_utils', 'concat:client_utils', 'concat:client']);
+  grunt.registerTask('build', ['ember_templates', 'concat:server_utils', 'concat:client_utils', 'concat:client']);
   grunt.registerTask('default', ['build', 'simplemocha']);
 };

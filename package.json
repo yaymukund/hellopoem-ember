@@ -21,7 +21,7 @@
     "connect-redis"           : "1.4.x",
     "grunt"                   : "0.4.x",
     "grunt-contrib-concat"    : "0.1.x",
-    "grunt-contrib-handlebars": "0.3.x",
+    "grunt-ember-templates"   : "0.4.x",
     "ember-node-resources"    : "https://github.com/yaymukund/ember-node-resources/tarball/master"
   },
 
