@@ -1,8 +1,5 @@
-// Adapter.
-App.Adapter = DS.RESTAdapter;
-
 // Create the adapter.
-App.adapter = App.Adapter.create({ bulkCommit: false });
+App.adapter = DS.RESTAdapter.create({ bulkCommit: false });
 
 // Transforms for serializing different types.
 App.adapter.registerTransform('date', {

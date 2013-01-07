@@ -9,7 +9,7 @@ module.exports = Resource.Controller.create({
 
   properties: {
     title: 'string',
-    user_id: 'string'
+    user_id: 'number'
   },
 
   actions: [{

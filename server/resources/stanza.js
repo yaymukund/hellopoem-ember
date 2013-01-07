@@ -7,7 +7,6 @@ module.exports = Resource.Controller.create({
   db: db,
 
   properties: {
-    poem_id: 'string',
-    lines: 'array'
+    poem_id: 'number'
   }
 });

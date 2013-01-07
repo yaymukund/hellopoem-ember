@@ -8,7 +8,9 @@ module.exports = Resource.Controller.create({
   db: db,
 
   properties: {
-    user_id: 'string',
+    user_id: 'number',
+    stanza_id: 'number',
+    line_number: 'number',
     text: 'string'
   }
 });
