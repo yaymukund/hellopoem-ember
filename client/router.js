@@ -1,15 +1,7 @@
-var router = Em.Router.create({
-  enableLogging: true,
-  location: 'hash',
+App.Router = Ember.Router.extend();
 
-  root: Em.Route.extend({
-    home: Em.Route.extend({
-      route: '/',
-      connectOutlets: function(router, context) {
-        router.get('applicationController').connectRandomPoem();
-      }
-    })
-  })
+App.Router.map(function(match) {
+  match('/').to('home');
 });
 
-App.initialize(router);
+App.HomeRoute = Ember.Route.extend({});
